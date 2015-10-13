@@ -51,32 +51,25 @@ function history(company_number, params) {
     var opt = {
             url: "https://api.companieshouse.gov.uk/company/" + company_number + "/filing-history/?" + qs.stringify(params)
         };
-    console.log(opt)
     api_call(opt).then(done)
     function done(results) {
         console.log(results)
     }
 }
 
-function viewdoc(company_number, params) {
-    var defaults = {
-        items_per_page: 5,
-        start_index: 1
-    }
-    params = _.defaults(params, defaults)
+function viewdoc(document_id, params) {
     var opt = {
-            url: "https://document-api.companieshouse.gov.uk/document/qpVlajd2XT3OrtjGy70bt7HGfa7DNDfiD3kJwd3BmAw/content",
+            url: "https://document-api.companieshouse.gov.uk/document/" + document_id + "/content",
             json: false
         };
-    console.log(opt)
     var file = fs.createWriteStream("temp.pdf");
-    api_pipe(opt).pipe(file).on("close", done)
+    api_call(opt, true).pipe(file).on("close", done)
     function done(results) {
         proc.execFile("/usr/bin/evince", ["temp.pdf"])
     }
 }
 
-function api_call(opt){
+function api_call(opt, pipe){
     if (!opt.url) utils.showErr("No URL for API call")
     var defaults = {
             url: opt.url,
@@ -86,22 +79,10 @@ function api_call(opt){
             }
         };
     var params = _.defaults(opt, defaults)
-    console.log(params)
-    return request_promise(params).catch(utils.showErr)
-}
-
-function api_pipe(opt){
-    if (!opt.url) utils.showErr("No URL for API call")
-    var defaults = {
-            url: opt.url,
-            json: true,
-            headers: {
-                "Authorization": "Basic " + new Buffer(secrets.ch_key + ":").toString("base64")
-            }
-        };
-    var params = _.defaults(opt, defaults)
-    console.log(params)
-    return request(params)
+    if (pipe)
+        return request(params)
+    else
+        return request_promise(params).catch(utils.showErr)
 }
 
 function displayTitle(result){
