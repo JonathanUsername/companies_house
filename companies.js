@@ -11,9 +11,12 @@ var request_promise = require("request-promise"),
     proc = require("child_process"),
     opener = require("opener");
 
+
+// Exported calls -----------------------------------------------------------------
+
 module.exports = exports = {}
 exports.calls = {
-	search: search,
+    search: search,
     filing_history: filing_history,
     viewdoc: viewdoc,
     show_share_history: show_share_history,
@@ -28,31 +31,17 @@ exports.test = function(queries) {
     })
 }
 
-function api_call(opt, pipe){
-    if (!opt.url) throw "No URL for API call"
-    var defaults = {
-            url: opt.url,
-            json: true,
-            headers: {
-                "Authorization": "Basic " + new Buffer(secrets.ch_key + ":").toString("base64")
-            }
-        };
-    var params = _.defaults(opt, defaults)
-    if (pipe)
-        return request(params)
-    else
-        return request_promise(params).catch(utils.showErr)
-}
-
-// Exported calls
-
 function show_share_history(query, params) {
+    // Usage: params = {"description": "statement-of-capital"}
+    // If none, shows all capital figures it can find
     get_company_number(query)
         .then(filing_history)
         .then(done)
     function done(results) {
-        display(results)
-        var data = _.filter(results.items, getCapital).map(getCapital)
+        // display(results)
+        var filtered = findWhere(results.items, params)
+        display(filtered)
+        var data = filterCapital(filtered)
         fs.readFile("template.html", function(err, template){
             if (err) throw err
             var addendum = "data = " + JSON.stringify(data)
@@ -74,7 +63,7 @@ function display(obj){
     console.log(JSON.stringify(obj, null, 2))
 }
 
-// Single calls
+// Single calls -----------------------------------------------------------------
 
 function show(call, query){
     exports.calls[call](query).then(function(d){ console.log(d) })
@@ -125,6 +114,21 @@ function viewdoc(document_id, params) {
     }
 }
 
+function api_call(opt, pipe){
+    if (!opt.url) throw "No URL for API call"
+    var defaults = {
+            url: opt.url,
+            json: true,
+            headers: {
+                "Authorization": "Basic " + new Buffer(secrets.ch_key + ":").toString("base64")
+            }
+        };
+    var params = _.defaults(opt, defaults)
+    if (pipe)
+        return request(params)
+    else
+        return request_promise(params).catch(utils.showErr)
+}
 
 // function getFigure(item){
 //     if (!_.has(item, "description_values.capital.figure"))
@@ -136,7 +140,14 @@ function viewdoc(document_id, params) {
 //         _.map(item.associated_filings, getFigure)
 // }
 
-function findWhere(items, params){
+
+// function getCapital(items, params, get){
+//     _.map(findWhere(items, params), function(){})
+// }
+
+// Utils  -----------------------------------------------------------------
+
+function findWhere(items, params, get){
     // Usage: findWhere(array, {"description": "statement-of-capital"})
     var arr = _.filter(items, params)
     items.forEach(function(item){
@@ -146,12 +157,16 @@ function findWhere(items, params){
     return arr
 }
 
-function getCapital(item){
+function filterCapital(items){
+    return _.filter(items, mapCapital).map(mapCapital)
+}
+
+function mapCapital(item){
     var d = item.description_values
     if (d && d.capital)
             return d
     else if (item.associated_filings)
-        return _.map(item.associated_filings, getCapital)[0]
+        return _.map(item.associated_filings, mapCapital)[0]
     else 
         return false
 }
