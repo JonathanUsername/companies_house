@@ -15,7 +15,8 @@ exports.calls = {
 	search: search,
     filing_history: filing_history,
     share_history: share_history,
-    viewdoc: viewdoc
+    viewdoc: viewdoc,
+    show: show
 }
 
 exports.test = function(queries) {
@@ -26,7 +27,7 @@ exports.test = function(queries) {
 }
 
 function api_call(opt, pipe){
-    if (!opt.url) utils.showErr("No URL for API call")
+    if (!opt.url) throw "No URL for API call"
     var defaults = {
             url: opt.url,
             json: true,
@@ -43,31 +44,39 @@ function api_call(opt, pipe){
 
 // Single calls
 
+function show(call, query){
+    exports.calls[call](query).then(function(d){ console.log(d) })
+}
+
 function search(query, params) {
     var defaults = {
         items_per_page: 5,
         q: query,
         start_index: 1
     }
-    params = _.defaults(params, defaults)
+    params = _.defaults(params || {}, defaults)
     var opt = {
         url : "https://api.companieshouse.gov.uk/search/companies?" + qs.stringify(params)
     }
-    api_call(opt).then(done)
-    function done(results) {
-        console.log(results)
-    }
+    return api_call(opt)
+}
+
+function get_company_number(query, params) {
+    return search(query).then(function(obj){ return obj.items[0].company_number })
 }
 
 function filing_history(company_number, params) {
+    if (!Number.isInteger(company_number))
+        throw "Company number, '" + company_number + "', is not integer"
     var defaults = {
         items_per_page: 100,
         start_index: 1
     }
-    params = _.defaults(params, defaults)
+    params = _.defaults(params || {}, defaults)
     var opt = {
             url: "https://api.companieshouse.gov.uk/company/" + company_number + "/filing-history/?" + qs.stringify(params)
         };
+    console.log(opt)
     return api_call(opt)
 }
 
@@ -85,10 +94,22 @@ function viewdoc(document_id, params) {
 
 // Complex calls
 
-function share_history(company_number, params) {
-    filing_history(company_number, params).then(done)
+function share_history(query, params) {
+    get_company_number(query)
+        .then(filing_history)
+        .then(done)
     function done(results) {
-        console.log(_.filter(results.items, getCapital).map(getCapital))
+        var data = _.filter(results.items, getCapital).map(getCapital)
+        fs.readFile("template.html", function(err, template){
+            if (err) throw err
+            var addendum = "data = " + JSON.stringify(data)
+            template = template.toString().replace("DATA_HERE", addendum)
+            fs.writeFile("index.html", template, function(err){
+                if (err) throw err
+                var page = require("path").resolve(__dirname, 'index.html')
+                proc.execFile("/usr/bin/google-chrome", [page])
+            })
+        })
     }
 }
 
