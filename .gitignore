@@ -1,3 +1,5 @@
 node_modules/
-test.json
 *.private.json
+test*
+tmp.pdf
+index.html
