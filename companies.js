@@ -66,7 +66,7 @@ function get_company_number(query, params) {
 }
 
 function filing_history(company_number, params) {
-    if (!Number.isInteger(company_number))
+    if (!Number.isInteger(parseInt(company_number)))
         throw "Company number, '" + company_number + "', is not integer"
     var defaults = {
         items_per_page: 100,
