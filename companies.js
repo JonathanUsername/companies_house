@@ -15,9 +15,10 @@ module.exports = exports = {}
 exports.calls = {
 	search: search,
     filing_history: filing_history,
-    share_history: share_history,
     viewdoc: viewdoc,
-    show: show
+    show_share_history: show_share_history,
+    show_filing_history: show_filing_history,
+    show: show // mostly for testing other functions
 }
 
 exports.test = function(queries) {
@@ -43,6 +44,35 @@ function api_call(opt, pipe){
         return request_promise(params).catch(utils.showErr)
 }
 
+// Exported calls
+
+function show_share_history(query, params) {
+    get_company_number(query)
+        .then(filing_history)
+        .then(done)
+    function done(results) {
+        var data = _.filter(results.items, getCapital).map(getCapital)
+        fs.readFile("template.html", function(err, template){
+            if (err) throw err
+            var addendum = "data = " + JSON.stringify(data)
+            template = template.toString().replace("DATA_HERE", addendum)
+            fs.writeFile("index.html", template, function(err){
+                if (err) throw err
+                var page = require("path").resolve(__dirname, 'index.html')
+                opener(page)
+            })
+        })
+    }
+}
+
+function show_filing_history(query, params){
+    get_company_number(query, params).then(filing_history).then(display)
+}
+
+function display(obj){
+    console.log(JSON.stringify(obj, null, 2))
+}
+
 // Single calls
 
 function show(call, query){
@@ -63,7 +93,7 @@ function search(query, params) {
 }
 
 function get_company_number(query, params) {
-    return search(query).then(function(obj){ return obj.items[0].company_number })
+    return search(query).then(firstActiveCompanyNumber)
 }
 
 function filing_history(company_number, params) {
@@ -94,26 +124,6 @@ function viewdoc(document_id, params) {
     }
 }
 
-// Complex calls
-
-function share_history(query, params) {
-    get_company_number(query)
-        .then(filing_history)
-        .then(done)
-    function done(results) {
-        var data = _.filter(results.items, getCapital).map(getCapital)
-        fs.readFile("template.html", function(err, template){
-            if (err) throw err
-            var addendum = "data = " + JSON.stringify(data)
-            template = template.toString().replace("DATA_HERE", addendum)
-            fs.writeFile("index.html", template, function(err){
-                if (err) throw err
-                var page = require("path").resolve(__dirname, 'index.html')
-                opener(page)
-            })
-        })
-    }
-}
 
 // function getFigure(item){
 //     if (!_.has(item, "description_values.capital.figure"))
@@ -133,4 +143,12 @@ function getCapital(item){
         return _.map(item.associated_filings, getCapital)[0]
     else 
         return false
+}
+
+function firstActiveCompanyNumber(obj){
+    return _.filter(obj.items, isActive)[0].company_number 
+}
+
+function isActive(item){
+    return item.company_status == "active"
 }

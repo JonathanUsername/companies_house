@@ -16,10 +16,17 @@
     y_arr = []
 
     data.forEach(function(d) {
-        x_arr.push(new Date(d.date))
+        d.date = new Date(d.date)
         var num = d.capital[0].figure.replace(/,/g, "")
         var flo = parseFloat(num)
-        y_arr.push(d.figure = flo)
+        d.figure = d.figure = flo
+    })
+
+    sorted_data = data.sort(function(a, b) {return a.date - b.date})
+
+    sorted_data.forEach(function(d) {
+        x_arr.push(d.date)
+        y_arr.push(d.figure)
     })
 
     TESTER = document.getElementById('tester');

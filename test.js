@@ -1,7 +1,7 @@
 var _ = require("lodash"), json = require("./test.json");
 
-console.log(require("path").resolve(__dirname, 'index.html'));
-//console.log(_.filter(json.items, getCapital).map(getCapital))
+// console.log(require("path").resolve(__dirname, 'index.html'));
+console.log(_.filter(json.items, function(item){ return item.company_status == "active" }) )
 
 function fn(item){
 	// console.log(item)
