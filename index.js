@@ -1,6 +1,7 @@
 // Handle flags and parameters. Control/config file
 
 var companies = require("./companies.js"),
+	utils = require("./utils.js"),
 	args = require("yargs")
 		.option('query', {
 		    alias: 'q',
@@ -17,6 +18,10 @@ var companies = require("./companies.js"),
 			describe: "api call to make",
 			demand: true
 		})
+		.option('params', {
+			describe: "extra api params",
+			string: true
+		})
 		.help(["h", "help"])
 		.argv;
 
@@ -24,5 +29,6 @@ if (args.test){
 	companies.test(args.q)
 } else {
 	console.log(args.q)
-	companies.calls[args.call](args.q, {})
+	var params = utils.tryJson(args.params)
+	companies.calls[args.call](args.q, params)
 }
