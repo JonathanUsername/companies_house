@@ -12,6 +12,7 @@
     "async": "^1.4.2",
     "d3-scale": "^0.1.1",
     "lodash": "^3.10.1",
+    "opener": "^1.4.1",
     "request": "^2.65.0",
     "request-promise": "^0.4.3",
     "yargs": "^3.27.0"

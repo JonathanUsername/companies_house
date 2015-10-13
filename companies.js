@@ -8,7 +8,8 @@ var request_promise = require("request-promise"),
     async = require("async"),
     utils = require("./utils"),
     secrets = require("./secrets.private.json"),
-    proc = require("child_process");
+    proc = require("child_process"),
+    opener = require("opener");
 
 module.exports = exports = {}
 exports.calls = {
@@ -86,9 +87,10 @@ function viewdoc(document_id, params) {
             json: false
         };
     var file = fs.createWriteStream("temp.pdf");
+    console.log(opt)
     api_call(opt, true).pipe(file).on("close", done)
     function done(results) {
-        proc.execFile("/usr/bin/evince", ["temp.pdf"])
+        opener("temp.pdf")
     }
 }
 
@@ -107,7 +109,7 @@ function share_history(query, params) {
             fs.writeFile("index.html", template, function(err){
                 if (err) throw err
                 var page = require("path").resolve(__dirname, 'index.html')
-                proc.execFile("/usr/bin/google-chrome", [page])
+                opener(page)
             })
         })
     }
