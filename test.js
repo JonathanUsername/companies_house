@@ -1,7 +1,21 @@
 var _ = require("lodash"), json = require("./test.json");
 
 // console.log(require("path").resolve(__dirname, 'index.html'));
-console.log(_.filter(json.items, function(item){ return item.company_status == "active" }) )
+// console.log(_.filter(json.items, function(item){ return item.company_status == "active" }) )
+
+console.log(findWhere(json.items, {"description": "statement-of-capital"}))
+
+function findWhere(items, params){
+    var arr = _.filter(items, params)
+    // var arr2 = _.flatten(_.pluck(_.filter(items, "associated_filings"), "associated_filings"))
+    items.forEach(function(item){
+    	if (_.has(item, "associated_filings")){
+    		var out = findWhere(item.associated_filings, params)
+	    	arr = arr.concat(out)
+    	}
+    })
+    return arr
+}
 
 function fn(item){
 	// console.log(item)

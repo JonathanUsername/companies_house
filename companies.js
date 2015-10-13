@@ -51,6 +51,7 @@ function show_share_history(query, params) {
         .then(filing_history)
         .then(done)
     function done(results) {
+        display(results)
         var data = _.filter(results.items, getCapital).map(getCapital)
         fs.readFile("template.html", function(err, template){
             if (err) throw err
@@ -134,6 +135,16 @@ function viewdoc(document_id, params) {
 //     else if (item.associated_filings)
 //         _.map(item.associated_filings, getFigure)
 // }
+
+function findWhere(items, params){
+    // Usage: findWhere(array, {"description": "statement-of-capital"})
+    var arr = _.filter(items, params)
+    items.forEach(function(item){
+        if (_.has(item, "associated_filings"))
+            arr = arr.concat(findWhere(item.associated_filings, params))
+    })
+    return arr
+}
 
 function getCapital(item){
     var d = item.description_values
