@@ -1,5 +1,6 @@
 node_modules/
 *.private.json
-test*
+test.*
 tmp.pdf
 index.html
+*.pdf

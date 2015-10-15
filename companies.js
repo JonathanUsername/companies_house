@@ -9,7 +9,8 @@ var request_promise = require("request-promise"),
     utils = require("./utils"),
     secrets = require("./secrets.private.json"),
     proc = require("child_process"),
-    opener = require("opener");
+    opener = require("opener"),
+    calls = require("./calls");
 
 
 // Exported calls -----------------------------------------------------------------
@@ -63,11 +64,11 @@ function display(obj){
     console.log(JSON.stringify(obj, null, 2))
 }
 
-// Single calls -----------------------------------------------------------------
-
 function show(call, query){
     exports.calls[call](query).then(function(d){ console.log(d) })
 }
+
+// Single calls -----------------------------------------------------------------
 
 function search(query, params) {
     var defaults = {
